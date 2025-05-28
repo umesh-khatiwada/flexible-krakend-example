@@ -18,15 +18,17 @@ jobs:
 
       - name: Run Krakend check
         run: |
+          mkdir -p tmp
           docker run --rm \
             -v "$PWD:/etc/krakend" \
+            -w /etc/krakend \
             -e FC_ENABLE=1 \
             -e FC_SETTINGS=config/settings/prod \
             -e FC_PARTIALS=config/partials \
             -e FC_TEMPLATES=config/templates \
-            -e FC_OUT=./tmp/out.json \
+            -e FC_OUT=/etc/krakend/tmp/out.json \
             -e SERVICE_NAME="KrakenD API Gateway" \
-            devopsfaith/krakend check -tdc "krakend.tmpl"
+            krakend check -tdc "krakend.tmpl"
 
       - name: Upload output file
         uses: actions/upload-artifact@v4
