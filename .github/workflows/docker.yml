@@ -1,0 +1,35 @@
+name: Krakend Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  krakend_check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create output directory
+        run: mkdir -p tmp
+
+      - name: Run Krakend check
+        run: |
+          docker run --rm -it \
+            -v "$PWD:/etc/krakend" \
+            -e FC_ENABLE=1 \
+            -e FC_SETTINGS=config/settings/prod \
+            -e FC_PARTIALS=config/partials \
+            -e FC_TEMPLATES=config/templates \
+            -e FC_OUT=./tmp/out.json \
+            -e SERVICE_NAME="KrakenD API Gateway" \
+            devopsfaith/krakend check -tdc "krakend.tmpl"
+
+      - name: Upload output file
+        uses: actions/upload-artifact@v4
+        with:
+          name: krakend-out
+          path: tmp/out.json
