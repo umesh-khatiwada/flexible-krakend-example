@@ -18,7 +18,7 @@ jobs:
 
       - name: Run Krakend check
         run: |
-          docker run --rm -it \
+          docker run --rm \
             -v "$PWD:/etc/krakend" \
             -e FC_ENABLE=1 \
             -e FC_SETTINGS=config/settings/prod \
