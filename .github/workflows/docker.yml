@@ -16,7 +16,7 @@ jobs:
       - name: Create tmp directory
         run: mkdir -p tmp
 
-      - name: Run Krakend template with official image
+      - name: Run Krakend check using official image
         run: |
           docker run --rm \
             -v "$PWD:/krakend" \
@@ -25,16 +25,12 @@ jobs:
             -e FC_SETTINGS=config/settings/prod \
             -e FC_PARTIALS=config/partials \
             -e FC_TEMPLATES=config/templates \
-            -e FC_OUT=/tmp/out.json \
+            -e FC_OUT=/krakend/tmp/out.json \
             -e SERVICE_NAME="KrakenD API Gateway" \
             krakend:2.9 check -tdc krakend.tmpl
 
-          # Copy the output file from the container's /tmp to the host's tmp dir
-          container_id=$(docker create \
-            -v "$PWD:/krakend" \
-            krakend:2.9)
-          docker cp "$container_id":/tmp/out.json ./tmp/out.json
-          docker rm "$container_id"
+      - name: Show output file
+        run: cat tmp/out.json
 
       - name: Upload output JSON as artifact
         uses: actions/upload-artifact@v4
