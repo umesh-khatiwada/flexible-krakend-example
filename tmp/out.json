@@ -1,0 +1,95 @@
+{
+  "$schema": "https://www.krakend.io/schema/v3.json",
+  "version": 3,
+  "name": "KrakenD API Gateway (PRODUCTION)",
+  "port": 8080,
+  "timeout": "3s",
+  "cache_ttl":  "3s",
+  "output_encoding": "json",
+  "extra_config": {},
+  "endpoints": [
+    {
+        "endpoint": "/test-1",
+        "method": "GET",
+        "backend": [
+            {
+              "url_pattern": "/__debug/prod",
+              "method": "GET",
+              "host": [
+                "http://localhost:8080"
+              ],
+              "extra_config": {
+                "qos/ratelimit/proxy": {
+  "max_rate": 0.5,
+  "capacity": 1
+}
+
+              }
+            }
+        ]
+    },
+    {
+        "endpoint": "/test-2",
+        "method": "GET",
+        "backend": [
+            {
+              "url_pattern": "/__debug/prod",
+              "method": "GET",
+              "host": [
+                "http://localhost:8080"
+              ],
+              "extra_config": {
+                "qos/ratelimit/proxy": {
+  "max_rate": 0.5,
+  "capacity": 1
+}
+
+              }
+            }
+        ]
+    },
+    {
+   "endpoint": "/test/profile",
+  "input_headers": [
+        "Content-Type",
+        "ClientId"
+      ],
+   "backend": [
+   {
+     "url_pattern": "/__debug",
+     "extra_config": {
+       "qos/ratelimit/proxy": {
+  "max_rate": 0.5,
+  "capacity": 1
+}
+
+     },
+     "host": ["http://localhost:8080"]
+   }
+   ]
+ }
+,
+{
+   "endpoint": "/test/admin",
+  "input_headers": [
+        "Content-Type",
+        "ClientId"
+      ],
+   "backend": [
+   {
+     "url_pattern": "/__debug",
+     "extra_config": {
+       "qos/ratelimit/proxy": {
+  "max_rate": 0.5,
+  "capacity": 1
+}
+
+     },
+     "host": ["http://localhost:8080"]
+   }
+   ]
+ }
+
+
+ ]
+}

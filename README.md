@@ -33,7 +33,7 @@ $ docker run \
 -e FC_SETTINGS=config/settings/prod \
 -e FC_PARTIALS=config/partials \
 -e FC_TEMPLATES=config/templates \
--e FC_OUT=out.json \
+-e FC_OUT=./tmp/out.json \
 -e SERVICE_NAME="KrakenD API Gateway" \
 devopsfaith/krakend check -tdc "krakend.tmpl"
 ```
