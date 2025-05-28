@@ -49,11 +49,20 @@ jobs:
       - name: Decode kubeconfig from secret
         run: echo "${{ secrets.KUBECONFIG_BASE64 }}" | base64 -d > kubeconfig.yaml
 
-      - name: Update krakend-configmap
+      - name: Create or update krakend-configmap
         run: |
-          kubectl --kubeconfig=kubeconfig.yaml -n krakend create configmap krakend-configmap \
-            --from-file=krakend.json=tmp/out.json \
-            -o yaml --dry-run=client | kubectl apply -f -
+          set -e
+          if kubectl --kubeconfig=kubeconfig.yaml -n krakend get configmap krakend-configmap > /dev/null 2>&1; then
+            echo "ConfigMap exists. Updating..."
+            kubectl --kubeconfig=kubeconfig.yaml -n krakend create configmap krakend-configmap \
+              --from-file=krakend.json=tmp/out.json \
+              -o yaml --dry-run=client \
+              | kubectl --kubeconfig=kubeconfig.yaml apply --validate=false -f -
+          else
+            echo "ConfigMap does not exist. Creating..."
+            kubectl --kubeconfig=kubeconfig.yaml -n krakend create configmap krakend-configmap \
+              --from-file=krakend.json=tmp/out.json
+          fi
 
       - name: Restart krakend deployment
         run: |
