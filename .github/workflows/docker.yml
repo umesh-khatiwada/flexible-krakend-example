@@ -1,4 +1,4 @@
-name: Krakend Check
+name: Krakend Check & Deploy
 
 on:
   push:
@@ -18,7 +18,6 @@ jobs:
 
       - name: Run Krakend check
         run: |
-          mkdir -p tmp
           docker run --rm \
             -v "$PWD:/etc/krakend" \
             -w /etc/krakend \
@@ -35,3 +34,27 @@ jobs:
         with:
           name: krakend-out
           path: tmp/out.json
+
+  update_configmap:
+    needs: krakend_check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Krakend output
+        uses: actions/download-artifact@v4
+        with:
+          name: krakend-out
+          path: tmp
+
+      - name: Decode kubeconfig from secret
+        run: echo "${{ secrets.KUBECONFIG_BASE64 }}" | base64 -d > kubeconfig.yaml
+
+      - name: Update krakend-configmap
+        run: |
+          kubectl --kubeconfig=kubeconfig.yaml -n krakend create configmap krakend-configmap \
+            --from-file=krakend.json=tmp/out.json \
+            -o yaml --dry-run=client | kubectl apply -f -
+
+      - name: Restart krakend deployment
+        run: |
+          kubectl --kubeconfig=kubeconfig.yaml -n krakend rollout restart deployment/krakend
