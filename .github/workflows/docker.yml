@@ -1,22 +1,22 @@
-name: Krakend Check & Deploy
+name: Krakend Update ConfigMap
 
 on:
   push:
     branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
-  krakend_check:
+  update-config:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Create output directory
+      - name: Create tmp directory
         run: mkdir -p tmp
 
-      - name: Run Krakend check
+      - name: Run Krakend template
         run: |
           docker run --rm \
             -v "$PWD:/etc/krakend" \
@@ -27,43 +27,32 @@ jobs:
             -e FC_TEMPLATES=config/templates \
             -e FC_OUT=/etc/krakend/tmp/out.json \
             -e SERVICE_NAME="KrakenD API Gateway" \
-            krakend check -tdc "krakend.tmpl"
+            devopsfaith/krakend:latest check -tdc krakend.tmpl
 
-      - name: Upload output file
+      - name: Upload output JSON as artifact
         uses: actions/upload-artifact@v4
         with:
           name: krakend-out
           path: tmp/out.json
 
-  update_configmap:
-    needs: krakend_check
-    runs-on: ubuntu-latest
+      - name: Decode kubeconfig secret
+        run: |
+          echo "${{ secrets.KUBECONFIG_BASE64 }}" | base64 -d > kubeconfig.yaml
 
-    steps:
-      - name: Download Krakend output
-        uses: actions/download-artifact@v4
-        with:
-          name: krakend-out
-          path: tmp
-
-      - name: Decode kubeconfig from secret
-        run: echo "${{ secrets.KUBECONFIG_BASE64 }}" | base64 -d > kubeconfig.yaml
-
-      - name: Create or update krakend-configmap
+      - name: Create or update krakend ConfigMap
+        env:
+          KUBECONFIG: kubeconfig.yaml
         run: |
           set -e
-          if kubectl --kubeconfig=kubeconfig.yaml -n krakend get configmap krakend-configmap > /dev/null 2>&1; then
+          if kubectl -n krakend get configmap krakend-configmap > /dev/null 2>&1; then
             echo "ConfigMap exists. Updating..."
-            kubectl --kubeconfig=kubeconfig.yaml -n krakend create configmap krakend-configmap \
+            kubectl create configmap krakend-configmap \
               --from-file=krakend.json=tmp/out.json \
               -o yaml --dry-run=client \
-              | kubectl --kubeconfig=kubeconfig.yaml apply --validate=false -f -
+              | kubectl apply --validate=false -f -
           else
             echo "ConfigMap does not exist. Creating..."
-            kubectl --kubeconfig=kubeconfig.yaml -n krakend create configmap krakend-configmap \
-              --from-file=krakend.json=tmp/out.json
+            kubectl create configmap krakend-configmap \
+              --from-file=krakend.json=tmp/out.json \
+              -n krakend
           fi
-
-      - name: Restart krakend deployment
-        run: |
-          kubectl --kubeconfig=kubeconfig.yaml -n krakend rollout restart deployment/krakend
