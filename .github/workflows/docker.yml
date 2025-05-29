@@ -58,8 +58,7 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
           export KUBECONFIG=./kubeconfig
 
-          # update ConfigMap and apply without server-side validation
-          kubectl create configmap krakend-config \
+           kubectl create configmap krakend-config \
             --from-file=tmp/out.json -n krakend \
             --dry-run=client -o yaml | \
           kubectl apply -f - --validate=false
