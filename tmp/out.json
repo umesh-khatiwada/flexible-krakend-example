@@ -13,30 +13,10 @@
         "method": "GET",
         "backend": [
             {
-              "url_pattern": "/__debug/prod",
+              "url_pattern": "/",
               "method": "GET",
               "host": [
-                "http://localhost:8080"
-              ],
-              "extra_config": {
-                "qos/ratelimit/proxy": {
-  "max_rate": 0.5,
-  "capacity": 1
-}
-
-              }
-            }
-        ]
-    },
-    {
-        "endpoint": "/test-2",
-        "method": "GET",
-        "backend": [
-            {
-              "url_pattern": "/__debug/prod",
-              "method": "GET",
-              "host": [
-                "http://localhost:8080"
+                "http://devopstest.checkmysite.live"
               ],
               "extra_config": {
                 "qos/ratelimit/proxy": {
@@ -64,7 +44,7 @@
 }
 
      },
-     "host": ["http://localhost:8080"]
+     "host": ["http://devopstest.checkmysite.live"]
    }
    ]
  }
@@ -85,7 +65,7 @@
 }
 
      },
-     "host": ["http://localhost:8080"]
+     "host": ["http://devopstest.checkmysite.live"]
    }
    ]
  }
