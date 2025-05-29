@@ -8,6 +8,7 @@ on:
 jobs:
   krakend_check_and_deploy:
     runs-on: ubuntu-latest
+    environment: flexible
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
