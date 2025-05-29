@@ -15,13 +15,15 @@ jobs:
       - name: Create output directory
         run: mkdir -p tmp
 
-      - name: Run Krakend check
+      - name: Run KrakenD check
         run: |
+          # make sure tmp is writable
           mkdir -p tmp
-          chmod -R 777 tmp
-          
+          chmod 777 tmp
+
           docker run --rm \
-            -v "$PWD:/etc/krakend" \
+            --user root \
+            -v "${GITHUB_WORKSPACE}:/etc/krakend" \
             -w /etc/krakend \
             -e FC_ENABLE=1 \
             -e FC_SETTINGS=config/settings/prod \
@@ -29,7 +31,7 @@ jobs:
             -e FC_TEMPLATES=config/templates \
             -e FC_OUT=/etc/krakend/tmp/out.json \
             -e SERVICE_NAME="KrakenD API Gateway" \
-            devopsfaith/krakend:latest check -tdc "krakend.tmpl"
+            krakend:latest check -tdc "krakend.tmpl"
 
       - name: Upload output file as artifact
         uses: actions/upload-artifact@v4
