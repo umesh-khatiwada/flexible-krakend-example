@@ -1,4 +1,4 @@
-name: Krakend Check
+name: KrakenD Configuration Deployment
 
 on:
   push:
@@ -6,9 +6,8 @@ on:
   pull_request:
 
 jobs:
-  krakend_check:
+  krakend_check_and_deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -28,10 +27,39 @@ jobs:
             -e FC_TEMPLATES=config/templates \
             -e FC_OUT=/etc/krakend/tmp/out.json \
             -e SERVICE_NAME="KrakenD API Gateway" \
-            krakend check -tdc "krakend.tmpl"
+            devopsfaith/krakend:latest check -tdc "krakend.tmpl"
 
-      - name: Upload output file
+      - name: Upload output file as artifact
         uses: actions/upload-artifact@v4
         with:
           name: krakend-out
           path: tmp/out.json
+          
+      # Deploy to Kubernetes if on main branch and not a pull request
+      - name: Deploy to Kubernetes
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          # Set up kubectl
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+          
+          # Decode and set up kubeconfig from base64-encoded secret
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
+          export KUBECONFIG=./kubeconfig
+          
+          # Create ConfigMap from generated configuration
+          kubectl create configmap krakend-config --from-file=tmp/out.json -n krakend --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Copy the configuration file to KrakenD pod
+          POD_NAME=$(kubectl get pod -n krakend -l app=krakend -o jsonpath='{.items[0].metadata.name}')
+          kubectl cp tmp/out.json krakend/$POD_NAME:/etc/krakend/
+          
+          # Restart the pod to apply new configuration
+          kubectl rollout restart deployment krakend -n krakend
+          
+          # Wait for the restart to complete
+          kubectl rollout status deployment krakend -n krakend
+          
+          # Clean up
+          rm -f kubeconfig
