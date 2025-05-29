@@ -43,27 +43,31 @@ jobs:
       - name: Deploy to Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          # Set up kubectl
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/
-          
-          # Decode and set up kubeconfig from base64-encoded secret
+          # skip if no kubeconfig secret
+          if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
+            echo "KUBE_CONFIG secret is empty – skipping deploy"
+            exit 0
+          fi
+
+          # download kubectl
+          curl -Lo kubectl "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+
+          # load kubeconfig
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
           export KUBECONFIG=./kubeconfig
-          
-          # Create ConfigMap from generated configuration
-          kubectl create configmap krakend-config --from-file=tmp/out.json -n krakend --dry-run=client -o yaml | kubectl apply -f -
-          
-          # Copy the configuration file to KrakenD pod
-          POD_NAME=$(kubectl get pod -n krakend -l app=krakend -o jsonpath='{.items[0].metadata.name}')
-          kubectl cp tmp/out.json krakend/$POD_NAME:/etc/krakend/
-          
-          # Restart the pod to apply new configuration
-          kubectl rollout restart deployment krakend -n krakend
-          
-          # Wait for the restart to complete
-          kubectl rollout status deployment krakend -n krakend
-          
-          # Clean up
+
+          # update ConfigMap and apply without server-side validation
+          kubectl create configmap krakend-config \
+            --from-file=tmp/out.json -n krakend \
+            --dry-run=client -o yaml | \
+          kubectl apply -f - --validate=false
+
+          # restart gateway
+          POD=$(kubectl get pod -n krakend -l app=krakend -o jsonpath='{.items[0].metadata.name}')
+          kubectl cp tmp/out.json krakend/$POD:/etc/krakend/
+          kubectl rollout restart deployment/krakend -n krakend
+          kubectl rollout status deployment/krakend -n krakend
+
+          # cleanup
           rm -f kubeconfig
