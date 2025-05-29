@@ -64,7 +64,7 @@ jobs:
             --dry-run=client -o yaml | \
           kubectl apply -f - --validate=false
 
-          # restart gateway
+          # restart gateway (no more kubectl cp)
           POD=$(kubectl get pod -n krakend -l app=krakend -o jsonpath='{.items[0].metadata.name}')
           kubectl cp tmp/out.json krakend/$POD:/etc/krakend/
           kubectl rollout restart deployment/krakend -n krakend
