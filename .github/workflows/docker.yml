@@ -40,7 +40,6 @@ jobs:
           name: krakend-out
           path: tmp/out.json
           
-      # Deploy to Kubernetes if on main branch and not a pull request
       - name: Deploy to Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
@@ -58,14 +57,13 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
           export KUBECONFIG=./kubeconfig
 
-           kubectl create configmap krakend-config \
-            --from-file=tmp/out.json -n krakend \
-            --dry-run=client -o yaml | \
-          kubectl apply -f - --validate=false
+          # delete old ConfigMap and create a fresh one
+          kubectl delete configmap krakend-config -n krakend --ignore-not-found
+          kubectl create configmap krakend-config \
+            --from-file=krakend.json=tmp/out.json \
+            -n krakend
 
-          # restart gateway (no more kubectl cp)
-          POD=$(kubectl get pod -n krakend -l app=krakend -o jsonpath='{.items[0].metadata.name}')
-          kubectl cp tmp/out.json krakend/$POD:/etc/krakend/
+          # restart gateway to pick up new config
           kubectl rollout restart deployment/krakend -n krakend
           kubectl rollout status deployment/krakend -n krakend
 
