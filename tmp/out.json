@@ -2,7 +2,6 @@
   "$schema": "https://www.krakend.io/schema/v3.json",
   "version": 3,
   "name": "KrakenD API Gateway (PRODUCTION)",
-  "port": 8080,
   "timeout": "3s",
   "cache_ttl":  "3s",
   "output_encoding": "json",
