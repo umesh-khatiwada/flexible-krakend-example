@@ -33,6 +33,13 @@ jobs:
             -e SERVICE_NAME="KrakenD API Gateway" \
             krakend:latest check -tdc "krakend.tmpl"
 
+      - name: Check out.json is not empty
+        run: |
+          if [ ! -s tmp/out.json ]; then
+            echo "ERROR: tmp/out.json is empty. Check your template and config files."
+            exit 1
+          fi
+          
       - name: Upload output file as artifact
         uses: actions/upload-artifact@v4
         with:
