@@ -16,22 +16,31 @@ jobs:
       - name: Create output directory
         run: mkdir -p tmp
 
-      - name: Run KrakenD check
+      - name: Run KrakenD check and generate config
         run: |
+          # Ensure tmp exists
           mkdir -p tmp
 
+          # Run Docker container to generate out.json
           docker run --rm \
-            -v "${GITHUB_WORKSPACE}:/etc/krakend" \
+            -v "${PWD}:/etc/krakend" \
             -w /etc/krakend \
             -e FC_ENABLE=1 \
             -e FC_SETTINGS=config/settings/prod \
             -e FC_PARTIALS=config/partials \
             -e FC_TEMPLATES=config/templates \
-            -e FC_OUT=/etc/krakend/tmp/out.json \
+            -e FC_OUT=tmp/out.json \
             -e SERVICE_NAME="KrakenD API Gateway" \
-            krakend:latest check -tdc "krakend.tmpl"
+            krakend:latest \
+            check -tdc krakend.tmpl
 
-          # Fix permissions after Docker run
+          # Ensure the output was generated
+          if [ ! -f tmp/out.json ]; then
+            echo "❌ KrakenD failed to generate tmp/out.json"
+            exit 1
+          fi
+
+          # Fix permissions to allow artifact upload
           chmod 644 tmp/out.json
 
       - name: Upload output file as artifact
