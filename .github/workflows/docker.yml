@@ -32,7 +32,7 @@ jobs:
             -e FC_OUT=tmp/out.json \
             -e SERVICE_NAME="KrakenD API Gateway" \
             krakend:latest check -tdc "krakend.tmpl"
-            
+
       - name: Upload output file as artifact
         uses: actions/upload-artifact@v4
         with:
