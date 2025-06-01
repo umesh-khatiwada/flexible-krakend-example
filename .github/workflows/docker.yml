@@ -16,59 +16,56 @@ jobs:
       - name: Create output directory
         run: mkdir -p tmp
 
-      - name: Run KrakenD check and generate config
+      - name: Run KrakenD check
         run: |
-          # Ensure tmp exists
+          # make sure tmp is writable
           mkdir -p tmp
+          chmod 777 tmp
 
-          # Run Docker container to generate out.json
           docker run --rm \
-            -v "${PWD}:/etc/krakend" \
+            --user root \
+            -v "${GITHUB_WORKSPACE}:/etc/krakend" \
             -w /etc/krakend \
             -e FC_ENABLE=1 \
             -e FC_SETTINGS=config/settings/prod \
             -e FC_PARTIALS=config/partials \
             -e FC_TEMPLATES=config/templates \
-            -e FC_OUT=tmp/out.json \
+            -e FC_OUT=/etc/krakend/tmp/out.json \
             -e SERVICE_NAME="KrakenD API Gateway" \
-            krakend:latest \
-            check -tdc krakend.tmpl
-
-          # Ensure the output was generated
-          if [ ! -f tmp/out.json ]; then
-            echo "❌ KrakenD failed to generate tmp/out.json"
-            exit 1
-          fi
-
-          # Fix permissions to allow artifact upload
-          chmod 644 tmp/out.json
+            krakend:latest check -tdc "krakend.tmpl"
 
       - name: Upload output file as artifact
         uses: actions/upload-artifact@v4
         with:
           name: krakend-out
           path: tmp/out.json
-
+          
       - name: Deploy to Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
+          # skip if no kubeconfig secret
           if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
             echo "KUBE_CONFIG secret is empty – skipping deploy"
             exit 0
           fi
 
-          curl -Lo kubectl "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          # download kubectl
+          curl -Lo kubectl "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x kubectl && sudo mv kubectl /usr/local/bin/
 
+          # load kubeconfig
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
           export KUBECONFIG=./kubeconfig
 
+          # delete old ConfigMap and create a fresh one
           kubectl delete configmap krakend-config -n krakend --ignore-not-found
           kubectl create configmap krakend-config \
             --from-file=krakend.json=tmp/out.json \
             -n krakend
 
+          # restart gateway to pick up new config
           kubectl rollout restart deployment/krakend -n krakend
           kubectl rollout status deployment/krakend -n krakend
 
+          # cleanup
           rm -f kubeconfig
