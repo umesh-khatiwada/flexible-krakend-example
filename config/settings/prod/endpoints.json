@@ -32,6 +32,14 @@
             "backend_url_pattern": "/swagger/swagger-ui-standalone-preset.js",
             "backend_method": "GET",
             "backend_host": "https://devopstest.checkmysite.live"
+        },
+        {
+            "endpoint": "/swagger/doc.json",
+            "method": "GET",
+            "output_encoding": "no-op",
+            "backend_url_pattern": "/swagger/doc.json",
+            "backend_method": "GET",
+            "backend_host": "https://devopstest.checkmysite.live"
         }
     ]
 }
