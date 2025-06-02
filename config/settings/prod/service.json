@@ -1,8 +1,8 @@
 {
 	"environment": "PRODUCTION",
 	"default_host": "https://devopstest.checkmysite.live",
-	"timeout": "3s",
-	"cache_ttl": "3s",
+	"timeout": "9s",
+	"cache_ttl": "9s",
 	"output_encoding": "json",
 	"extra_config": {}
 }
