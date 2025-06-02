@@ -33,25 +33,35 @@ jobs:
             -e SERVICE_NAME="KrakenD API Gateway" \
             krakend:latest check -tdc "krakend.tmpl"
 
-      - name: Check out.json is not empty
+      - name: Check out.json is not empty and fix permissions
         run: |
           if [ ! -s tmp/out.json ]; then
             echo "ERROR: tmp/out.json is empty. Check your template and config files."
             exit 1
           fi
           
+          # Fix permissions for the output file
+          sudo chmod 664 tmp/out.json
+          
       - name: Upload output file as artifact
         uses: actions/upload-artifact@v4
         with:
           name: krakend-out
           path: tmp/out.json
+      
+      - name: Download artifact for deployment
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/download-artifact@v4
+        with:
+          name: krakend-out
+          path: artifact
           
       - name: Deploy to Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           # skip if no kubeconfig secret
           if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
-            echo "KUBE_CONFIG secret is empty – skipping deploy"
+            echo "KUBE_CONFIG secret is empty skipping deploy"
             exit 0
           fi
 
@@ -66,7 +76,7 @@ jobs:
           # delete old ConfigMap and create a fresh one
           kubectl delete configmap krakend-config -n krakend --ignore-not-found
           kubectl create configmap krakend-config \
-            --from-file=krakend.json=tmp/out.json \
+            --from-file=krakend.json=artifact/out.json \
             -n krakend
 
           # restart gateway to pick up new config

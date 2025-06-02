@@ -5,7 +5,7 @@
             "method": "GET",
             "backend_url_pattern": "/swagger/index.html",
             "backend_method": "GET",
-            "backend_host": "https://devopstest.checkmysite.live"
+            "backend_host": "http://devopstest.checkmysite.live"
         }
     ]
 }
