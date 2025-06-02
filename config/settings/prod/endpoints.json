@@ -41,5 +41,14 @@
             "backend_method": "GET",
             "backend_host": "https://devopstest.checkmysite.live"
         }
+        ,
+        {
+            "endpoint": "/api/v1/:endpoint",
+            "method": "GET",
+            "output_encoding": "no-op",
+            "backend_url_pattern": "/api/v1/:endpoint",
+            "backend_method": "GET",
+            "backend_host": "https://devopstest.checkmysite.live"
+        }
     ]
 }
