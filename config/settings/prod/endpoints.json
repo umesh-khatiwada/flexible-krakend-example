@@ -5,7 +5,7 @@
             "method": "GET",
             "backend_url_pattern": "/",
             "backend_method": "GET",
-            "backend_host": "http://devopstest.checkmysite.live"
+            "backend_host": "https://console.test.01cloud.dev"
         }
     ]
 }
