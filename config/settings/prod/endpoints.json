@@ -3,6 +3,7 @@
         {
             "endpoint": "/swagger/index.html",
             "method": "GET",
+            "output_encoding": "no-op",
             "backend_url_pattern": "/swagger/index.html",
             "backend_method": "GET",
             "backend_host": "https://devopstest.checkmysite.live"
