@@ -1,11 +1,11 @@
 {
     "endpoints": [
         {
-            "endpoint": "/test-1",
+            "endpoint": "/swagger/index.html",
             "method": "GET",
-            "backend_url_pattern": "/",
+            "backend_url_pattern": "/swagger/index.html",
             "backend_method": "GET",
-            "backend_host": "http://devopstest.checkmysite.live"
+            "backend_host": "https://devopstest.checkmysite.live"
         }
     ]
 }
