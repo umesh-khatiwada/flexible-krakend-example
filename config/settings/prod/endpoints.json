@@ -1,10 +1,10 @@
 {
     "endpoints": [
         {
-            "endpoint": "/swagger/:index.html",
+            "endpoint": "/swagger/index.html",
             "method": "GET",
             "output_encoding": "no-op",
-            "backend_url_pattern": "/swagger/:index.html",
+            "backend_url_pattern": "/swagger/index.html",
             "backend_method": "GET",
             "backend_host": "https://devopstest.checkmysite.live"
         }
@@ -14,6 +14,22 @@
             "method": "GET",
             "output_encoding": "no-op",
             "backend_url_pattern": "/swagger/swagger-ui.css",
+            "backend_method": "GET",
+            "backend_host": "https://devopstest.checkmysite.live"
+        },
+        {
+            "endpoint": "/swagger/swagger-ui-bundle.js",
+            "method": "GET",
+            "output_encoding": "no-op",
+            "backend_url_pattern": "/swagger/swagger-ui-bundle.js",
+            "backend_method": "GET",
+            "backend_host": "https://devopstest.checkmysite.live"
+        },
+        {
+            "endpoint": "/swagger/swagger-ui-standalone-preset.js",
+            "method": "GET",
+            "output_encoding": "no-op",
+            "backend_url_pattern": "/swagger/swagger-ui-standalone-preset.js",
             "backend_method": "GET",
             "backend_host": "https://devopstest.checkmysite.live"
         }
