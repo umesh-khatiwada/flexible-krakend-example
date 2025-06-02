@@ -49,6 +49,31 @@
             "backend_url_pattern": "/api/v1/:endpoint",
             "backend_method": "GET",
             "backend_host": "https://devopstest.checkmysite.live"
+        },
+                {
+            "endpoint": "/queue/send",
+            "method": "POST",
+            "output_encoding": "no-op",
+            "backend": [
+                {
+                    "host": ["amqps://xfepekcs:OuNJOkl128li9Qm8zFkggw0zFw0os2JZ@fuji.lmq.cloudamqp.com/xfepekcs"],
+                    "disable_host_sanitize": true,
+                    "extra_config": {
+                        "backend/amqp/producer": {
+                            "name": "queue-1",
+                            "exchange": "some-exchange",
+                            "durable": true,
+                            "delete": false,
+                            "no_wait": true,
+                            "no_local": false,
+                            "routing_key": "#",
+                            "mandatory": false,
+                            "immediate": false,
+                            "backoff_strategy": "exponential-jitter"
+                        }
+                    }
+                }
+            ]
         }
     ]
 }

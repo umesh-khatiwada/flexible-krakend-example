@@ -6,24 +6,30 @@
   "cache_ttl":  "{{ .service.cache_ttl }}",
   "output_encoding": "{{ .service.output_encoding }}",
   "extra_config": {{ marshal .service.extra_config }},
-  "endpoints": [{{ range $idx, $endpoint := .endpoints.endpoints }}{{if $idx}},{{end}}
-    {
+  "endpoints": [
+    {{- range $idx, $endpoint := .endpoints.endpoints }}
+      {{- if $idx}},{{ end }}
+      {
         "endpoint": "{{ $endpoint.endpoint }}",
         "method": "{{ $endpoint.method }}",
         "output_encoding": "{{ $endpoint.output_encoding }}",
+        {{- if $endpoint.backend }}
+        "backend": {{ marshal $endpoint.backend }}
+        {{- else }}
         "backend": [
-            {
-              "url_pattern": "{{ $endpoint.backend_url_pattern }}",
-              "method": "{{ $endpoint.backend_method }}",
-              "host": [
-                "{{ $endpoint.backend_host }}"
-              ],
-              "extra_config": {
-                {{ include "rate_limit_backend.tmpl" }}
-              }
-            }
+          {
+            "url_pattern": "{{ $endpoint.backend_url_pattern }}",
+            "method": "{{ $endpoint.backend_method }}",
+            "host": [
+              "{{ $endpoint.backend_host }}"
+            ]
+            {{- if $endpoint.extra_config }},
+            "extra_config": {{ marshal $endpoint.extra_config }}
+            {{- end }}
+          }
         ]
-    }{{ end }},
-    {{ template "endpoints.tmpl" . }}
- ]
+        {{- end }}
+      }
+    {{- end }}
+  ]
 }
