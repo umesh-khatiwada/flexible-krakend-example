@@ -1,6 +1,6 @@
 {
 	"environment": "PRODUCTION",
-	"default_host": "https://console.test.01cloud.dev",
+	"default_host": "https://devopstest.checkmysite.live",
 	"timeout": "3s",
 	"cache_ttl": "3s",
 	"output_encoding": "json",
