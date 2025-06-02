@@ -10,10 +10,10 @@
         }
         ,
         {
-            "endpoint": "/swagger/:swagger-ui.css",
+            "endpoint": "/swagger/swagger-ui.css",
             "method": "GET",
             "output_encoding": "no-op",
-            "backend_url_pattern": "/swagger/:swagger-ui.css",
+            "backend_url_pattern": "/swagger/swagger-ui.css",
             "backend_method": "GET",
             "backend_host": "https://devopstest.checkmysite.live"
         }
