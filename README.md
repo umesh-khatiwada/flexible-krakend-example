@@ -2,12 +2,31 @@
 
 <div align="center">
 
-| <a href="https://youtu.be/U1LHoKWy0HU"><img src="https://i.ytimg.com/vi/U1LHoKWy0HU/maxresdefault.jpg" width="300" heigth="300"></a><br>[Video in English](https://youtu.be/U1LHoKWy0HU) | <a href="https://youtu.be/qeTeLPLnkIY"><img src="https://i.ytimg.com/vi/qeTeLPLnkIY/maxresdefault.jpg" width="300" heigth="300"></a><br>[Video in Spanish](https://youtu.be/qeTeLPLnkIY) |
+| <a href="https://youtu.be/U1LHoKWy0HU"><img src="https://i.ytimg.com/vi/U1LHoKWy0HU/maxresdefault.jpg" width="300" height="300"></a><br>[Video in English](https://youtu.be/U1LHoKWy0HU) | <a href="https://youtu.be/qeTeLPLnkIY"><img src="https://i.ytimg.com/vi/qeTeLPLnkIY/maxresdefault.jpg" width="300" height="300"></a><br>[Video in Spanish](https://youtu.be/qeTeLPLnkIY) |
 |---|---|
 
 </div>
 
-Test environment to check [Flexible configuration](https://www.krakend.io/docs/configuration/flexible-config/) feature.
+Test environment to check the [KrakenD Flexible Configuration](https://www.krakend.io/docs/configuration/flexible-config/) feature, with a GitHub Actions workflow that compiles the config and optionally deploys it to Kubernetes.
+
+> **Attribution:** the structure and the video links in this README follow KrakenD's public flexible-configuration example material. TODO: confirm the exact upstream repository and its license before reuse.
+
+## Prerequisites
+
+- Docker (the examples below use the `devopsfaith/krakend` image), or a local `krakend` binary
+- Docker Compose for the compose example
+- (CI deploy only) a Kubernetes cluster and a `KUBE_CONFIG` secret, see [CI/CD](#cicd)
+
+## Architecture
+
+```mermaid
+flowchart LR
+    S[config/settings/prod/*.json] --> T[krakend.tmpl]
+    P[config/partials] --> T
+    TP[config/templates] --> T
+    T -->|krakend check -tdc| O[out.json compiled config]
+    O -->|krakend run| G[KrakenD gateway :8080]
+```
 
 This repo contains a basic implementation for flexible configuration, including the use of variables, templates, code snippets and some basic logic to iterate over multiple endpoints.
 
@@ -17,9 +36,10 @@ This repo contains a basic implementation for flexible configuration, including 
 - `Dockerfile`: A docker definition to build an immutable container with KrakenD
 - `docker-compose.yml` an example docker compose definition file to be able to execute KrakenD enabling Flexible Configuration.
 - `config/partials/*`: some code snippets referenced from base file
-- `config/templates/*`: a template referenced from base file
-- `config/settings/{dev|prod}/endpoint.json`: a collection of endpoints
+- `config/templates/*`: endpoint templates (`endpoint_one.tmpl`, `endpoint_two.tmpl`, `endpoints.tmpl`). Note: the current `krakend.tmpl` builds its endpoints from `endpoints.json` and does not include these templates; see the Bonus Track below.
+- `config/settings/{dev|prod}/endpoints.json`: a collection of endpoints (only `prod` exists in this repo)
 - `config/settings/{dev|prod}/service.json`: basic configuration parameters for the service
+- `.github/workflows/docker.yml`: CI workflow, see [CI/CD](#cicd)
 
 ## Running this test
 
@@ -39,6 +59,8 @@ devopsfaith/krakend check -tdc "krakend.tmpl"
 ```
 
 ### Using Docker Compose
+
+The gateway is published on host port `8081` (container port 8080).
 
 Based on the definition included in the [docker-compose.yml](docker-compose.yml) definition.
 
@@ -75,6 +97,32 @@ To run this new container, you just need to execute:
 ```shell
 $ docker run -p 8080:8080 mykrakend run -dc krakend.json
 ```
+
+## Configuration
+
+| Variable | Used by | Description |
+|----------|---------|-------------|
+| `FC_ENABLE` | KrakenD | Set to `1` to enable flexible configuration |
+| `FC_SETTINGS` | KrakenD | Settings directory, e.g. `config/settings/prod` |
+| `FC_PARTIALS` | KrakenD | Partials directory, `config/partials` |
+| `FC_TEMPLATES` | KrakenD | Templates directory, `config/templates` |
+| `FC_OUT` | KrakenD | Path of the compiled config file |
+| `SERVICE_NAME` | `krakend.tmpl` | Gateway name used in the compiled config |
+| `ENV` | Dockerfile build arg | Settings folder to compile (default `prod`) |
+
+Backend hosts live in `config/settings/prod/service.json` and `endpoints.json`. Do not put credentials (such as broker URLs with passwords) in these files; keep them out of version control.
+
+## CI/CD
+
+`.github/workflows/docker.yml` runs `krakend check` on pushes and pull requests, fails if `tmp/out.json` is empty and uploads it as an artifact. On pushes to `main` it deploys, only if the `KUBE_CONFIG` secret (base64 kubeconfig) is set: it recreates the `krakend-config` ConfigMap in the `krakend` namespace and restarts the `krakend` Deployment.
+
+## Troubleshooting
+
+- The workflow fails with "tmp/out.json is empty": the template or settings did not compile; run the local `krakend check` command above to see the error.
+
+## Author
+
+Umesh Khatiwada - https://github.com/umesh-khatiwada
 
 ---
 
